@@ -106,7 +106,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #fefeff 0%, #f582f1 100%);
+  background: linear-gradient(135deg, #667eea 0%, #f582f1 100%);
   padding: 20px;
 }
 
@@ -160,7 +160,7 @@ h1 {
 
 h2 {
   font-size: 22px;
-  color: #c80bbc;
+  color: #b2146a;
   margin-bottom: 10px;
   text-align: center;
   font-weight: 600;
@@ -207,7 +207,7 @@ p {
 .btn-submit {
   width: 100%;
   padding: 14px;
-  background: #bd299f;
+  background: #b2146a;
   color: white;
   border: none;
   border-radius: 10px;
