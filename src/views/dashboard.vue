@@ -327,6 +327,103 @@
     </div>
   </div>
 </div>
+
+    <!-- Modal de Visualización -->
+    <div v-if="showViewModal" class="modal-overlay" @click="closeViewModal">
+      <div class="modal-content modal-large" @click.stop>
+        <div class="modal-header">
+          <h2>👁️ Detalles del Paciente</h2>
+          <button @click="closeViewModal" class="btn-close">✕</button>
+        </div>
+        <div class="modal-body">
+          <div v-if="selectedPaciente" class="detail-sections">
+            <!-- Identificación -->
+            <div class="detail-section">
+              <h3 class="detail-section-title">📄 Identificación</h3>
+              <div class="detail-grid">
+                <div class="detail-item">
+                  <strong>Historia Clínica:</strong>
+                  <span class="highlight-text">{{ selectedPaciente.hc || 'S/N' }}</span>
+                </div>
+                <div class="detail-item">
+                  <strong>Tipo de Documento:</strong>
+                  <span :class="['badge-documento', selectedPaciente.tipo_documento || 'DNI']">
+                    {{ selectedPaciente.tipo_documento === 'CE' ? 'Carnet de Extranjería' : 'DNI' }}
+                  </span>
+                </div>
+                <div class="detail-item">
+                  <strong>{{ selectedPaciente.tipo_documento === 'CE' ? 'N° CE:' : 'DNI:' }}</strong>
+                  <span class="highlight-text">{{ selectedPaciente.dni }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Datos Personales -->
+            <div class="detail-section">
+              <h3 class="detail-section-title">👤 Datos Personales</h3>
+              <div class="detail-grid">
+                <div class="detail-item">
+                  <strong>Apellidos:</strong>
+                  <span>{{ selectedPaciente.apellidos }}</span>
+                </div>
+                <div class="detail-item">
+                  <strong>Nombres:</strong>
+                  <span>{{ selectedPaciente.nombres }}</span>
+                </div>
+                <div class="detail-item">
+                  <strong>Sexo:</strong>
+                  <span :class="['badge-sexo', selectedPaciente.sexo]">
+                    {{ selectedPaciente.sexo === 'M' ? '👨 Masculino' : '👩 Femenino' }}
+                  </span>
+                </div>
+                <div class="detail-item">
+                  <strong>Fecha de Nacimiento:</strong>
+                  <span>{{ formatDate(selectedPaciente.fecha_nacimiento) }}</span>
+                </div>
+                <div class="detail-item">
+                  <strong>Edad:</strong>
+                  <span class="edad-badge">{{ calcularEdad(selectedPaciente.fecha_nacimiento) }} años</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Datos de Contacto -->
+            <div class="detail-section">
+              <h3 class="detail-section-title">📍 Datos de Contacto</h3>
+              <div class="detail-grid">
+                <div class="detail-item full-width">
+                  <strong>Domicilio:</strong>
+                  <span>{{ selectedPaciente.domicilio_actual || 'No especificado' }}</span>
+                </div>
+                <div class="detail-item">
+                  <strong>Lugar:</strong>
+                  <span>{{ selectedPaciente.lugar || 'No especificado' }}</span>
+                </div>
+                <div class="detail-item">
+                  <strong>Teléfono:</strong>
+                  <span>{{ selectedPaciente.telefono || 'No especificado' }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Información de Seguro -->
+            <div class="detail-section">
+              <h3 class="detail-section-title">🏥 Información de Seguro</h3>
+              <div class="detail-grid">
+                <div class="detail-item">
+                  <strong>Tipo de Seguro:</strong>
+                  <span :class="['badge-seguro', selectedPaciente.tipo_de_seguro]">
+                    {{ selectedPaciente.tipo_de_seguro || 'No especificado' }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
     <!-- Modal de Confirmación de Eliminación -->
     <div v-if="showDeleteModal" class="modal-overlay" @click="closeDeleteModal">
       <div class="modal-content modal-small" @click.stop>
@@ -480,7 +577,7 @@ export default {
         } finally {
           loading.value = false;
         }
-      }, 300);
+      }, 400);
     };
 
     const clearSearch = async () => {
@@ -516,7 +613,7 @@ export default {
         tipo_de_seguro: '',
         tipo_documento: 'DNI'
       };
-      formError.value = 'LA HISTORIA ESTA DUPLICADA';
+      formError.value = '';
       showFormModal.value = true;
     };
 
