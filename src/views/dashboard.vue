@@ -179,204 +179,154 @@
       </div>
     </div>
 
-    <!-- Modal para Ver Detalles -->
-    <div v-if="showViewModal" class="modal-overlay" @click="closeViewModal">
-      <div class="modal-content" @click.stop>
-        <div class="modal-header">
-          <h2>👤 Detalles del Paciente</h2>
-          <button @click="closeViewModal" class="btn-close">✕</button>
-        </div>
-        <div class="modal-body" v-if="selectedPaciente">
-          <div class="detail-grid">
-            <div class="detail-item">
-              <strong>Historia Clínica (HC):</strong>
-              <span class="highlight-text">{{ selectedPaciente.hc || 'Sin asignar' }}</span>
+<!-- Modal para Crear/Editar -->
+<div v-if="showFormModal" class="modal-overlay" @click="closeFormModal">
+  <div class="modal-content modal-large" @click.stop>
+    <div class="modal-header">
+      <h2>{{ isEditMode ? '✏️ Editar Paciente' : '➕ Nuevo Paciente' }}</h2>
+      <button @click="closeFormModal" class="btn-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <form @submit.prevent="submitForm" class="patient-form">
+        <!-- Tipo de Documento -->
+        <div class="form-section">
+          <h3 class="section-title">📄 Identificación</h3>
+          
+          <div class="form-group">
+            <label>Tipo de Documento *</label>
+            <div class="radio-group radio-group-horizontal">
+              <label class="radio-option">
+                <input type="radio" v-model="formData.tipo_documento" value="DNI" />
+                <span class="radio-label">🆔 DNI (Peruano)</span>
+              </label>
+              <label class="radio-option">
+                <input type="radio" v-model="formData.tipo_documento" value="CE" />
+                <span class="radio-label">🛂 Carnet de Extranjería</span>
+              </label>
             </div>
-            <div class="detail-item">
-              <strong>Tipo de Documento:</strong>
-              <span :class="['badge-documento', selectedPaciente.tipo_documento || 'DNI']">
-                {{ (selectedPaciente.tipo_documento === 'CE') ? '🛂 Carnet de Extranjería' : '🆔 DNI' }}
-              </span>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>{{ formData.tipo_documento === 'CE' ? 'Carnet de Extranjería' : 'DNI' }} *</label>
+              <input 
+                v-model="formData.dni" 
+                type="text" 
+                required 
+                maxlength="20" 
+                :placeholder="formData.tipo_documento === 'DNI' ? 'Ej: 12345678' : 'Ej: 001234567'"
+              />
             </div>
-            <div class="detail-item">
-              <strong>DNI/Carnet:</strong>
-              <span>{{ selectedPaciente.dni }}</span>
-            </div>
-            <div class="detail-item">
-              <strong>Apellidos:</strong>
-              <span>{{ selectedPaciente.apellidos }}</span>
-            </div>
-            <div class="detail-item">
-              <strong>Nombres:</strong>
-              <span>{{ selectedPaciente.nombres }}</span>
-            </div>
-            <div class="detail-item">
-              <strong>Sexo:</strong>
-              <span>{{ selectedPaciente.sexo === 'M' ? 'Masculino' : 'Femenino' }}</span>
-            </div>
-            <div class="detail-item">
-              <strong>Edad:</strong>
-              <span>{{ calcularEdad(selectedPaciente.fecha_nacimiento) }} años</span>
-            </div>
-            <div class="detail-item">
-              <strong>Fecha de Nacimiento:</strong>
-              <span>{{ formatDate(selectedPaciente.fecha_nacimiento) }}</span>
-            </div>
-            <div class="detail-item">
-              <strong>Domicilio:</strong>
-              <span>{{ selectedPaciente.domicilio_actual || 'N/A' }}</span>
-            </div>
-            <div class="detail-item">
-              <strong>Lugar:</strong>
-              <span>{{ selectedPaciente.lugar || 'N/A' }}</span>
-            </div>
-            <div class="detail-item">
-              <strong>Teléfono:</strong>
-              <span>{{ selectedPaciente.telefono || 'N/A' }}</span>
-            </div>
-            <div class="detail-item">
-              <strong>Tipo de Seguro:</strong>
-              <span :class="['badge-seguro', selectedPaciente.tipo_de_seguro]">
-                {{ selectedPaciente.tipo_de_seguro || 'N/A' }}
-              </span>
+            <div class="form-group">
+              <label>Historia Clínica (HC) *</label>
+              <input 
+                v-model="formData.hc" 
+                @input="watchHCInput"
+                type="text" 
+                required 
+                maxlength="50" 
+                placeholder="Ej: HC-001"
+                :class="{ 'input-error': hcError }"
+              />
+              <small v-if="hcError" class="field-error">
+                ⚠️ {{ hcError }}
+              </small>
+              <small v-else-if="hcValidating" class="field-info">
+                🔄 Verificando disponibilidad...
+              </small>
+              <small v-else-if="hcAvailable && formData.hc" class="field-success">
+                ✅ HC disponible
+              </small>
             </div>
           </div>
         </div>
-      </div>
-    </div>
 
-    <!-- Modal para Crear/Editar -->
-    <div v-if="showFormModal" class="modal-overlay" @click="closeFormModal">
-      <div class="modal-content modal-large" @click.stop>
-        <div class="modal-header">
-          <h2>{{ isEditMode ? '✏️ Editar Paciente' : '➕ Nuevo Paciente' }}</h2>
-          <button @click="closeFormModal" class="btn-close">✕</button>
+        <!-- Datos Personales -->
+        <div class="form-section">
+          <h3 class="section-title">👤 Datos Personales</h3>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label>Apellidos *</label>
+              <input v-model="formData.apellidos" type="text" required placeholder="Apellido Paterno Materno" />
+            </div>
+            <div class="form-group">
+              <label>Nombres *</label>
+              <input v-model="formData.nombres" type="text" required placeholder="Nombres completos" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Sexo *</label>
+              <select v-model="formData.sexo" required>
+                <option value="">Seleccionar...</option>
+                <option value="M">👨 Masculino</option>
+                <option value="F">👩 Femenino</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Fecha de Nacimiento *</label>
+              <input v-model="formData.fecha_nacimiento" type="date" required />
+            </div>
+          </div>
         </div>
-        <div class="modal-body">
-          <form @submit.prevent="submitForm" class="patient-form">
-            <!-- Tipo de Documento -->
-            <div class="form-section">
-              <h3 class="section-title">📄 Identificación</h3>
-              
-              <div class="form-group">
-                <label>Tipo de Documento *</label>
-                <div class="radio-group radio-group-horizontal">
-                  <label class="radio-option">
-                    <input type="radio" v-model="formData.tipo_documento" value="DNI" />
-                    <span class="radio-label">🆔 DNI (Peruano)</span>
-                  </label>
-                  <label class="radio-option">
-                    <input type="radio" v-model="formData.tipo_documento" value="CE" />
-                    <span class="radio-label">🛂 Carnet de Extranjería</span>
-                  </label>
-                </div>
-              </div>
 
-              <div class="form-row">
-                <div class="form-group">
-                  <label>{{ formData.tipo_documento === 'CE' ? 'Carnet de Extranjería' : 'DNI' }} *</label>
-                  <input 
-                    v-model="formData.dni" 
-                    type="text" 
-                    required 
-                    maxlength="20" 
-                    :placeholder="formData.tipo_documento === 'DNI' ? 'Ej: 12345678' : 'Ej: 001234567'"
-                  />
-                </div>
-                <div class="form-group">
-                  <label>Historia Clínica (HC) *</label>
-                  <input v-model="formData.hc" type="text" required maxlength="50" placeholder="Ej: HC-001" />
-                </div>
-              </div>
+        <!-- Datos de Contacto -->
+        <div class="form-section">
+          <h3 class="section-title">📍 Datos de Contacto</h3>
+          
+          <div class="form-group">
+            <label>Domicilio Actual</label>
+            <input v-model="formData.domicilio_actual" type="text" placeholder="Dirección completa" />
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Lugar</label>
+              <input v-model="formData.lugar" type="text" placeholder="Distrito, Provincia" />
             </div>
-
-            <!-- Datos Personales -->
-            <div class="form-section">
-              <h3 class="section-title">👤 Datos Personales</h3>
-              
-              <div class="form-row">
-                <div class="form-group">
-                  <label>Apellidos *</label>
-                  <input v-model="formData.apellidos" type="text" required placeholder="Apellido Paterno Materno" />
-                </div>
-                <div class="form-group">
-                  <label>Nombres *</label>
-                  <input v-model="formData.nombres" type="text" required placeholder="Nombres completos" />
-                </div>
-              </div>
-
-              <div class="form-row">
-                <div class="form-group">
-                  <label>Sexo *</label>
-                  <select v-model="formData.sexo" required>
-                    <option value="">Seleccionar...</option>
-                    <option value="M">👨 Masculino</option>
-                    <option value="F">👩 Femenino</option>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label>Fecha de Nacimiento *</label>
-                  <input v-model="formData.fecha_nacimiento" type="date" required />
-                </div>
-              </div>
+            <div class="form-group">
+              <label>Teléfono</label>
+              <input v-model="formData.telefono" type="text" maxlength="20" placeholder="999 999 999" />
             </div>
-
-            <!-- Datos de Contacto -->
-            <div class="form-section">
-              <h3 class="section-title">📍 Datos de Contacto</h3>
-              
-              <div class="form-group">
-                <label>Domicilio Actual</label>
-                <input v-model="formData.domicilio_actual" type="text" placeholder="Dirección completa" />
-              </div>
-
-              <div class="form-row">
-                <div class="form-group">
-                  <label>Lugar</label>
-                  <input v-model="formData.lugar" type="text" placeholder="Distrito, Provincia" />
-                </div>
-                <div class="form-group">
-                  <label>Teléfono</label>
-                  <input v-model="formData.telefono" type="text" maxlength="20" placeholder="999 999 999" />
-                </div>
-              </div>
-            </div>
-
-            <!-- Datos de Seguro -->
-            <div class="form-section">
-              <h3 class="section-title">🏥 Información de Seguro</h3>
-              
-              <div class="form-group">
-                <label>Tipo de Seguro *</label>
-                <select v-model="formData.tipo_de_seguro" required>
-                  <option value="">Seleccionar...</option>
-                  <option value="SIS">✅ SIS</option>
-                  <option value="Sin SIS">❌ Sin SIS</option>
-                  <option value="EsSalud">🏥 EsSalud</option>
-                  <option value="Particular">💳 Particular</option>
-                  <option value="Otro">📋 Otro</option>
-                </select>
-              </div>
-            </div>
-
-            <div v-if="formError" class="form-error">
-              ❌ {{ formError }}
-            </div>
-
-            <div class="form-actions">
-              <button type="button" @click="closeFormModal" class="btn-cancel">
-                Cancelar
-              </button>
-              <button type="submit" class="btn-submit" :disabled="formLoading">
-                <span v-if="formLoading" class="spinner-small"></span>
-                <span v-else>{{ isEditMode ? '💾 Actualizar' : '✨ Crear Paciente' }}</span>
-              </button>
-            </div>
-          </form>
+          </div>
         </div>
-      </div>
-    </div>
 
+        <!-- Datos de Seguro -->
+        <div class="form-section">
+          <h3 class="section-title">🏥 Información de Seguro</h3>
+          
+          <div class="form-group">
+            <label>Tipo de Seguro *</label>
+            <select v-model="formData.tipo_de_seguro" required>
+              <option value="">Seleccionar...</option>
+              <option value="SIS">✅ SIS</option>
+              <option value="Sin SIS">❌ Sin SIS</option>
+              <option value="EsSalud">🏥 EsSalud</option>
+              <option value="Particular">💳 Particular</option>
+              <option value="Otro">📋 Otro</option>
+            </select>
+          </div>
+        </div>
+
+        <div v-if="formError" class="form-error">
+          ❌ {{ formError }}
+        </div>
+
+        <div class="form-actions">
+          <button type="button" @click="closeFormModal" class="btn-cancel">
+            Cancelar
+          </button>
+          <button type="submit" class="btn-submit" :disabled="formLoading || hcValidating || (hcError && formData.hc)">
+            <span v-if="formLoading" class="spinner-small"></span>
+            <span v-else>{{ isEditMode ? '💾 Actualizar' : '✨ Crear Paciente' }}</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
     <!-- Modal de Confirmación de Eliminación -->
     <div v-if="showDeleteModal" class="modal-overlay" @click="closeDeleteModal">
       <div class="modal-content modal-small" @click.stop>
@@ -566,7 +516,7 @@ export default {
         tipo_de_seguro: '',
         tipo_documento: 'DNI'
       };
-      formError.value = '';
+      formError.value = 'LA HISTORIA ESTA DUPLICADA';
       showFormModal.value = true;
     };
 
