@@ -90,11 +90,13 @@ export default {
         sender: 'bot' 
       },
     ]);
+
     const currentMessage = ref('');
     const loading = ref(false);
-    const messageHistoryRef = ref(null);
 
-    const genAI = new GoogleGenerativeAI('AIzaSyA3cd0UjCTbjA99ak99j1b8z0bphxBSDn4');
+    const messageHistoryRef = ref(null);
+    const API_KEY =  import.meta.env.VITE_API_GEMINI
+    const genAI = new GoogleGenerativeAI(API_KEY)
     const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
     const chat = ref(null);
 
